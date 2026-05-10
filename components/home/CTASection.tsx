@@ -1,46 +1,47 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useMemo, useState } from "react";
-import Button from "@/components/ui/Button";
+import { motion, type Variants } from "framer-motion";
+import Link from "next/link";
+import { useState } from "react";
 
 const amountOptions = [25, 50, 100, 250] as const;
 
-const container = {
-  hidden: { opacity: 0, y: 28 },
+const containerVariants: Variants = {
+  hidden: { opacity: 0, y: 30 },
   show: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.6,
-      ease: "easeOut",
-      when: "beforeChildren",
-      staggerChildren: 0.1,
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
     },
   },
 };
 
-const item = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
 };
 
 export default function CTASection() {
-  const [selectedAmount, setSelectedAmount] = useState<number | "custom">(50);
-  const [customAmount, setCustomAmount] = useState("");
+  const [selected, setSelected] = useState("$50");
+  const [customValue, setCustomValue] = useState("");
 
-  const donationAmount = useMemo(() => {
-    if (selectedAmount === "custom") {
-      const parsed = Number(customAmount);
-      return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-    }
+  const presetImpactText: Record<string, string> = {
+    $25: "Your $25 helps provide clean water for a family for one month.",
+    $50: "Your $50 provides clean water for a family for one year.",
+    $100: "Your $100 supports clean water and hygiene resources for multiple families.",
+    $250: "Your $250 helps fund community-scale water access improvements.",
+  };
 
-    return selectedAmount;
-  }, [customAmount, selectedAmount]);
-
-  const familySupport = donationAmount > 0 ? donationAmount / 50 : 0;
-  const familyText =
-    familySupport % 1 === 0 ? familySupport.toFixed(0) : familySupport.toFixed(1);
+  const headlineText =
+    selected === "Custom" && customValue
+      ? `Your $${customValue} makes a real difference.`
+      : (presetImpactText[selected] ?? "Your gift makes a real difference.");
 
   return (
     <section
@@ -52,36 +53,39 @@ export default function CTASection() {
 
       <motion.div
         className="relative mx-auto flex w-full max-w-4xl flex-col items-center text-center"
-        variants={container}
+        variants={containerVariants}
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, amount: 0.25 }}
       >
         <motion.p
-          variants={item}
+          variants={itemVariants}
           className="text-xs font-semibold uppercase tracking-[0.2em] text-cream/80"
         >
           Make a Difference Today
         </motion.p>
 
         <motion.h2
-          variants={item}
+          variants={itemVariants}
           className="mt-5 max-w-3xl font-display text-4xl italic leading-tight text-cream md:text-6xl"
         >
-          Your $50 provides clean water for a family for one year.
+          {headlineText}
         </motion.h2>
 
         <motion.div
-          variants={item}
+          variants={itemVariants}
           className="mt-10 flex w-full max-w-3xl flex-wrap items-center justify-center gap-3"
         >
           {amountOptions.map((amount) => (
             <button
               key={amount}
               type="button"
-              onClick={() => setSelectedAmount(amount)}
+              onClick={() => {
+                setSelected(`$${amount}`);
+                setCustomValue("");
+              }}
               className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition-all duration-300 ${
-                selectedAmount === amount
+                selected === `$${amount}`
                   ? "border-cream bg-cream text-primary"
                   : "border-cream/40 bg-transparent text-cream hover:border-cream/70"
               }`}
@@ -92,9 +96,9 @@ export default function CTASection() {
 
           <button
             type="button"
-            onClick={() => setSelectedAmount("custom")}
+            onClick={() => setSelected("Custom")}
             className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition-all duration-300 ${
-              selectedAmount === "custom"
+              selected === "Custom"
                 ? "border-cream bg-cream text-primary"
                 : "border-cream/40 bg-transparent text-cream hover:border-cream/70"
             }`}
@@ -103,36 +107,24 @@ export default function CTASection() {
           </button>
         </motion.div>
 
-        {selectedAmount === "custom" ? (
-          <motion.div variants={item} className="mt-4 w-full max-w-xs">
-            <label htmlFor="custom-donation" className="sr-only">
-              Enter custom donation amount
-            </label>
-            <input
-              id="custom-donation"
-              type="number"
-              min="1"
-              inputMode="numeric"
-              placeholder="Enter amount"
-              value={customAmount}
-              onChange={(event) => setCustomAmount(event.target.value)}
-              className="w-full rounded-full border border-cream/40 bg-primary/20 px-5 py-3 text-center text-cream placeholder:text-cream/50 focus:border-cream/70 focus:outline-none"
-            />
-          </motion.div>
+        {selected === "Custom" ? (
+          <motion.input
+            variants={itemVariants}
+            type="number"
+            placeholder="Enter amount in $"
+            value={customValue}
+            onChange={(e) => setCustomValue(e.target.value)}
+            className="mt-4 bg-white/10 border border-white/30 text-white placeholder-white/50 rounded-full px-6 py-3 text-center text-lg outline-none focus:border-white w-48"
+          />
         ) : null}
 
-        <motion.p variants={item} className="mt-6 text-sm text-cream/85 md:text-base">
-          {donationAmount > 0
-            ? `A $${donationAmount.toLocaleString()} gift helps provide clean water support for about ${familyText} ${
-                Number(familyText) === 1 ? "family" : "families"
-              } for one year.`
-            : "Choose an amount to preview your impact."}
-        </motion.p>
-
-        <motion.div variants={item} className="mt-8">
-          <Button variant="primary" size="lg" className="px-10 py-4 text-lg font-semibold">
+        <motion.div variants={itemVariants} className="mt-8">
+          <Link
+            href="/donate"
+            className="inline-flex items-center justify-center rounded-full bg-accent px-10 py-4 text-lg font-semibold text-primary transition-colors hover:bg-accentDark"
+          >
             Donate Now
-          </Button>
+          </Link>
         </motion.div>
       </motion.div>
     </section>

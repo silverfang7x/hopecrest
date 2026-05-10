@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 const navItems = [
   { href: "#home", label: "Home" },
   { href: "#programs", label: "Programs" },
-  { href: "#impact", label: "Impact" },
+  { href: "/about", label: "Impact" },
 ];
 
 export default function Navbar() {
